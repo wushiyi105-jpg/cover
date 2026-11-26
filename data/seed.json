@@ -1,0 +1,19 @@
+{
+  "members": [
+    {"name": "本人", "relation": "本人", "birth_year": 1993, "income": 180000},
+    {"name": "配偶", "relation": "配偶", "birth_year": 1991, "income": 150000},
+    {"name": "女儿", "relation": "子女", "birth_year": 2019, "income": 0}
+  ],
+  "policies": [
+    {"kind": "寿险", "member": "本人", "sum_insured": 1200000, "premium": 4200, "due_on": "2026-12-06", "clause_no": "3.2", "clause_text": "被保险人因意外伤害身故，按基本保额给付保险金。"},
+    {"kind": "重疾", "member": "本人", "sum_insured": 300000, "premium": 5600, "due_on": "2026-10-20", "clause_no": "4.1", "clause_text": "初次确诊本合同约定的重大疾病，按基本保额给付。"},
+    {"kind": "医疗", "member": "本人", "sum_insured": 200000, "premium": 1800, "due_on": "2026-11-15"},
+    {"kind": "意外", "member": "配偶", "sum_insured": 400000, "premium": 900, "due_on": "2027-03-01"},
+    {"kind": "医疗", "member": "女儿", "sum_insured": 300000, "premium": 1200, "due_on": "2026-11-30"}
+  ],
+  "claims": [
+    {"policy_id": 3, "amount": 8600, "on": "2026-11-18", "docs": ["诊断证明", "发票", "费用清单"], "hospital": "市二医院"},
+    {"policy_id": 3, "amount": 3200, "on": "2026-11-24", "docs": ["发票"], "hospital": "市二医院"},
+    {"policy_id": 2, "amount": 15000, "on": "2026-11-20", "docs": ["诊断证明", "发票"]}
+  ]
+}
