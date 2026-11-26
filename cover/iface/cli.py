@@ -68,7 +68,7 @@ def renew(day: str = typer.Option(""), db: Path = typer.Option(None)) -> None:
         console.print(line)
 
 
-@app.command()
+@app.command("explain")
 def explain_cmd(db: Path = typer.Option(None)) -> None:
     """模型解读（无 key 时不编）。"""
     s = _settings(db)
@@ -81,7 +81,6 @@ def explain_cmd(db: Path = typer.Option(None)) -> None:
         console.print("模型没开，只看 audit")
 
 
-app.command(name="explain")(explain_cmd)
 
 
 @app.command()
