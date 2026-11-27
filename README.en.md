@@ -51,6 +51,9 @@ No. The multiples are a general rule of thumb.
 **Where do clause texts come from?**
 You store them; citations without a matching clause are removed.
 
+**Was the Docker image verified?**
+Docker is not installed on the build machine, so `docker build .` was not run and the image is unverified; only the Dockerfile and ports were checked statically.
+
 ## Commands
 
 See the Chinese README (`README.md`) for the command table with flags; every command supports `--help`.
@@ -63,13 +66,13 @@ FastAPI + Uvicorn, Jinja2, pydantic / pydantic-settings, httpx, Typer + Rich, SQ
 
 ```mermaid
 graph LR
-  A[家庭成员] --> M[保额缺口]
-  B[保单] --> M[宽限期]
-  C[理赔] --> M[材料 / 重复索赔]
-  M --> R[规则：缺口 / 宽限 / 材料 / 重复]
-  R --> P[模型写解读]
-  P --> G[条款守卫]
-  G --> O[审计报告]
+  A[household members] --> M[coverage gap]
+  B[policies] --> M[grace period]
+  C[claims] --> M[documents / duplicate claims]
+  M --> R[rules: gap / grace / documents / duplicate]
+  R --> P[model writes explanation]
+  P --> G[policy guard]
+  G --> O[audit report]
 ```
 
 ## Layout

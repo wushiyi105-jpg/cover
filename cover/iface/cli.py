@@ -83,8 +83,6 @@ def explain_cmd(db: Path = typer.Option(None)) -> None:
         console.print("模型没开，只看 audit")
 
 
-
-
 @app.command()
 def doctor(db: Path = typer.Option(None)) -> None:
     """四项体检。"""
