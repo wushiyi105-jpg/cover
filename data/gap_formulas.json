@@ -1,0 +1,12 @@
+{
+  "formulas": [
+    {"kind": "寿险", "formula": "年收入 × 10", "basis": "income", "factor": 10, "default": 0, "note": "覆盖 10 年家庭收入缺口"},
+    {"kind": "重疾", "formula": "年收入 × 3", "basis": "income", "factor": 3, "default": 0, "note": "覆盖 3 年治疗与康复期收入损失"},
+    {"kind": "意外", "formula": "年收入 × 5", "basis": "income", "factor": 5, "default": 0, "note": "意外身故/伤残的一次性补偿"},
+    {"kind": "医疗", "formula": "30 万定额", "basis": "fixed", "factor": 0, "default": 300000, "note": "住院与大病医疗的基础保额"},
+    {"kind": "年金", "formula": "年支出 × 10", "basis": "income", "factor": 10, "default": 0, "note": "退休后 10 年基础现金流"},
+    {"kind": "教育金", "formula": "30 万定额", "basis": "fixed", "factor": 0, "default": 300000, "note": "一名子女本科阶段学费与生活费"},
+    {"kind": "长期护理", "formula": "年护理费 × 5", "basis": "fixed", "factor": 0, "default": 500000, "note": "失能后 5 年护理与照护"},
+    {"kind": "家财", "formula": "房屋重置价 × 1", "basis": "fixed", "factor": 0, "default": 1000000, "note": "房屋及室内财产重置成本"}
+  ]
+}

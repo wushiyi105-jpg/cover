@@ -12,10 +12,13 @@ from rich.console import Console
 from ..adapters.llm import build_llm
 from ..adapters.notify import WebhookNotifier
 from ..adapters.store import SqliteStore
-from ..app.run import PROMPT, explain, renew_due, report
+from ..app.annual import build_report as annual_report
+from ..app.run import PROMPT, explain, renew_due
+from ..app.run import report as audit_report
 from ..config import Settings
 from ..config import settings as default_settings
 from ..doctor import main as doctor_main
+from ..domain.catalog import query_terms
 
 app = typer.Typer(help="家庭保单：缺口与宽限", no_args_is_help=True)
 console = Console()
@@ -65,7 +68,49 @@ def audit(day: str = typer.Option(""), db: Path = typer.Option(None)) -> None:
     s = _settings(db)
     store = _store(s)
     d = date.fromisoformat(day) if day else date.today()
-    console.print(report(store, d))
+    console.print(audit_report(store, d))
+
+
+@app.command()
+def report(
+    out: Path = typer.Option(None, help="输出 Markdown；不填打印到终端"),
+    no_llm: bool = typer.Option(False, "--no-llm"),
+    db: Path = typer.Option(None),
+) -> None:
+    """年度保单体检：缺口、续费日历、理赔材料、条款红线。"""
+    s = _settings(db)
+    store = _store(s)
+    extra = ""
+    notes: list[str] = []
+    if s.llm_enabled and not no_llm:
+        llm = build_llm(s.llm_base_url, s.llm_api_key, s.llm_model, PROMPT)
+        extra, notes = explain(store, s, llm)
+    text = annual_report(store, date.today(), extra)
+    if out:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text, encoding="utf-8")
+        console.print(f"[green]已写出[/] {out}（{len(text.splitlines())} 行）")
+    else:
+        console.print(text)
+    for n in notes:
+        console.print(f"  [yellow]{n}[/]")
+    if not extra:
+        console.print("[dim]本次为本地核算：缺口、续费、材料全部运行时计算。[/]")
+
+
+@app.command("terms")
+def terms_cmd(
+    query: str = typer.Argument(..., help="关键词，例如 既往症 / 牙科 / 酒驾"),
+    kind: str = typer.Option("", help="限定险种：医疗/重疾/意外/寿险/家财"),
+) -> None:
+    """查免责条款：只返回能引用原文的条目；查不到就明说。"""
+    hits = query_terms(query, kind)
+    if not hits:
+        console.print("[yellow]没有找到可引用的原文，不能回答这个问题。[/]")
+        raise typer.Exit(code=1)
+    for row in hits[:8]:
+        console.print(f"{row['clause_no']} {row['title']}（{'/'.join(row['kinds'])}）")
+        console.print(f"  原文：{row['text']}")
 
 
 @app.command()

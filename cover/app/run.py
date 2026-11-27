@@ -28,18 +28,55 @@ def explain(
     if llm is None:
         return "", []
     a = audit(store.list_members(), store.list_policies(), store.list_claims(), date.today())
+    policies = store.list_policies()
     facts = {
         "members": [m.name for m in store.list_members()],
         "gaps": [{"member": g.member, "kind": g.kind, "short": g.short} for g in a.gaps],
-        "policies": [{"id": p.id, "kind": p.kind, "clause_no": p.clause_no} for p in store.list_policies()],
+        "policies": [
+            {
+                "id": p.id,
+                "kind": p.kind,
+                "clause_no": p.clause_no,
+                "clause_text": p.clause_text,
+            }
+            for p in policies
+        ],
     }
     try:
         data = json.loads(llm.write(PROMPT, json.dumps(facts, ensure_ascii=False)))
     except Exception:  # noqa: BLE001
         return "", []
-    text = str(data.get("text", ""))
-    notes = [f.message for f in check(text, store.list_policies())]
-    return text, notes
+    if "summary" not in data:
+        text = str(data.get("text", ""))
+        notes = [f.message for f in check(text, policies)]
+        return text, notes
+    by_id = {p.id: p for p in policies}
+    summary = str(data.get("summary", "")).strip()
+    if summary and check(summary, policies):
+        summary = ""
+        notes = ["摘要提到条款但没有引用原文，已省略"]
+    else:
+        notes = []
+    kept: list[str] = []
+    for item in list(data.get("items", []))[:3]:
+        try:
+            policy = by_id[int(item.get("policy_id", 0))]
+        except (KeyError, TypeError, ValueError):
+            notes.append("模型给了一个不存在的保单号，该条已丢")
+            continue
+        clause_text = str(item.get("clause_text", ""))
+        clause_no = str(item.get("clause_no", ""))
+        if clause_text != policy.clause_text or clause_no != policy.clause_no:
+            notes.append(f"保单 #{policy.id} 的条款原文对不上，已丢")
+            continue
+        meaning = str(item.get("meaning", "")).strip()
+        if len(meaning) > 40:
+            meaning = meaning[:40]
+        kept.append(f"- 保单 #{policy.id}｜{policy.clause_no}：{policy.clause_text} → {meaning}")
+    body = summary
+    if kept:
+        body += "\n" + "\n".join(kept)
+    return body, notes
 
 
 def renew_due(store: StorePort, today: date, days: int = 30) -> list[str]:
