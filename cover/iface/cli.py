@@ -9,8 +9,9 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from ..adapters.llm import build_llm
 from ..adapters.store import SqliteStore
-from ..app.run import explain, renew_due, report
+from ..app.run import PROMPT, explain, renew_due, report
 from ..config import Settings
 from ..config import settings as default_settings
 from ..doctor import main as doctor_main
@@ -72,7 +73,8 @@ def renew(day: str = typer.Option(""), db: Path = typer.Option(None)) -> None:
 def explain_cmd(db: Path = typer.Option(None)) -> None:
     """模型解读（无 key 时不编）。"""
     s = _settings(db)
-    text, notes = explain(_store(s), s)
+    llm = build_llm(s.llm_base_url, s.llm_api_key, s.llm_model, PROMPT) if s.llm_enabled else None
+    text, notes = explain(_store(s), s, llm)
     if text:
         console.print(text)
     for n in notes:

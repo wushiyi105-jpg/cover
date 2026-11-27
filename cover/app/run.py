@@ -4,19 +4,17 @@ from __future__ import annotations
 
 import json
 from datetime import date
+from pathlib import Path
 
-from ..adapters.llm import build_llm
-from ..adapters.store import SqliteStore
 from ..config import Settings
 from ..domain.engine import audit
 from ..domain.guard import check
+from ..ports import LLMPort, StorePort
 
-PROMPT = """基于给出的成员、保单、缺口，写三句以内的解读，只引用输入里的数字。
-如需引条款，必须同时给条款号与该条款原文，原文不能改写。输出 JSON：
-{"text": "…", "clause_no": "3.2", "clause_text": "原文"}"""
+PROMPT = (Path(__file__).resolve().parents[2] / "prompts" / "terms.md").read_text(encoding="utf-8")
 
 
-def report(store: SqliteStore, today: date | None = None) -> str:
+def report(store: StorePort, today: date | None = None) -> str:
     a = audit(store.list_members(), store.list_policies(), store.list_claims(), today or date.today())
     lines = [f"缺口 {len(a.gaps)} 项，合计 {a.total_short:,.0f} 元"]
     lines += [f"  {g.member}/{g.kind}：已有 {g.have:,.0f}，建议 {g.need:,.0f}，差 {g.short:,.0f}" for g in a.gaps[:8]]
@@ -24,8 +22,10 @@ def report(store: SqliteStore, today: date | None = None) -> str:
     return "\n".join(lines)
 
 
-def explain(store: SqliteStore, settings: Settings) -> tuple[str, list[str]]:
-    if not settings.llm_enabled:
+def explain(
+    store: StorePort, settings: Settings, llm: LLMPort | None = None
+) -> tuple[str, list[str]]:
+    if llm is None:
         return "", []
     a = audit(store.list_members(), store.list_policies(), store.list_claims(), date.today())
     facts = {
@@ -33,7 +33,6 @@ def explain(store: SqliteStore, settings: Settings) -> tuple[str, list[str]]:
         "gaps": [{"member": g.member, "kind": g.kind, "short": g.short} for g in a.gaps],
         "policies": [{"id": p.id, "kind": p.kind, "clause_no": p.clause_no} for p in store.list_policies()],
     }
-    llm = build_llm(settings.llm_base_url, settings.llm_api_key, settings.llm_model, PROMPT)
     try:
         data = json.loads(llm.write(PROMPT, json.dumps(facts, ensure_ascii=False)))
     except Exception:  # noqa: BLE001
@@ -43,7 +42,7 @@ def explain(store: SqliteStore, settings: Settings) -> tuple[str, list[str]]:
     return text, notes
 
 
-def renew_due(store: SqliteStore, today: date, days: int = 30) -> list[str]:
+def renew_due(store: StorePort, today: date, days: int = 30) -> list[str]:
     out: list[str] = []
     for p in store.list_policies():
         left = (p.due_on - today).days
