@@ -1,6 +1,6 @@
 {% from "_macros.html" import shell, head, stats, card, tag, empty, note %}
-{% call shell("Cover", "家庭保单", true) %}
-{{ head("家庭保单审计", today ~ " · 缺口 " ~ a.gaps|length ~ " 项 · 合计差 " ~ "{:,.0f}".format(a.total_short) ~ " 元") }}
+{% call shell("Cover", "家庭保单柜", true) %}
+{{ head("这家人的保单还缺什么", today ~ " · " ~ a.gaps|length ~ " 项缺口 · 合计差 " ~ "{:,.0f}".format(a.total_short) ~ " 元") }}
 
 {{ stats([
   ("保额缺口", a.gaps|length, "项"),
